@@ -1,0 +1,11 @@
+venv/
+logs/
+ANIME_RECOMMENDER.egg-info/
+.env
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+chroma_db/
+chroma_db.bak-incompatible/
+.vscode/

@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    image: llmops-app:latest
+    container_name: anime-recommender
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      # El indice de Chroma se persiste en el host: sobrevive a rebuilds
+      - ./chroma_db:/app/chroma_db
+      - ./logs:/app/logs
+    restart: unless-stopped

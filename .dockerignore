@@ -1,0 +1,10 @@
+venv/
+.venv/
+logs/
+*.egg-info/
+__pycache__/
+*.pyc
+.env
+.git/
+.gitignore
+chroma_db/

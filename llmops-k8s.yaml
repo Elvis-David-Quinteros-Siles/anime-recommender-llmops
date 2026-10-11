@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llmops-app
+  labels:
+    app: llmops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llmops
+  template:
+    metadata:
+      labels:
+        app: llmops
+    spec:
+      containers:
+      - name: llmops-container
+        image: llmops-app:latest  # Use local image
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 8501
+        envFrom:
+          - secretRef:
+              name: llmops-secrets
+
+        # Kubernetes ignora el HEALTHCHECK del Dockerfile: hay que declararlo aca.
+        # El entrypoint construye el vector store antes de levantar Streamlit,
+        # asi que el pod tarda en escuchar. startupProbe cubre esa ventana.
+        startupProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          periodSeconds: 5
+          failureThreshold: 60      # hasta 5 min para indexar
+        readinessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          periodSeconds: 20
+          failureThreshold: 3
+
+        # torch + el modelo de embeddings necesitan memoria real
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "3Gi"
+            cpu: "2"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llmops-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: llmops
+  # Streamlit mantiene estado por sesion sobre websocket: si algun dia subis
+  # replicas, sin esto las sesiones saltan de pod y se rompen.
+  sessionAffinity: ClientIP
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8501
