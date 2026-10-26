@@ -1,0 +1,2 @@
+{{ with secret "secret/data/anime-recommender/prod" }}{{ range $k, $v := .Data.data }}{{ $k }}={{ $v }}
+{{ end }}{{ end }}
